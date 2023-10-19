@@ -8,6 +8,8 @@ from shop.models import Category
 from shop.serializers import CategorySerializer
 from shop.models import Product
 from shop.serializers import ProductSerializer
+from shop.models import Article
+from shop.serializers import ArticleSerializer
 
 class CategoryViewset(ReadOnlyModelViewSet):
  
@@ -52,3 +54,15 @@ class ProductSerializer(ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'description', 'active']
+
+
+class ArticleViewset(ReadOnlyModelViewSet):
+
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        queryset = Article.objects.filter(active=True)
+        product_id = self.request.GET.get('product_id')
+        if product_id is not None:
+            queryset = queryset.filter(product_id=product_id)
+        return queryset
