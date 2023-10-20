@@ -29,7 +29,7 @@ class CategorySerializer(ModelSerializer):
         model = Category
         fields = ['id', 'date_created', 'date_updated', 'name', 'products']
 
-        def get_products(self, instance):
+    def get_products(self, instance):
             queryset = instance.products.filter(active=True)
             serializer = ProductSerializer(queryset, many=True)
             return serializer.data
