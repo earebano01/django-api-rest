@@ -1,11 +1,14 @@
 from unittest import mock
-from django.urls import reverse_lazy, reverse 
+
+from django.urls import reverse_lazy, reverse
 from rest_framework.test import APITestCase
 
 from shop.models import Category, Product
 from shop.mocks import mock_openfoodfact_success, ECOSCORE_GRADE
 
+
 class ShopAPITestCase(APITestCase):
+
     @classmethod
     def setUpTestData(cls):
         cls.category = Category.objects.create(name='Fruits', active=True)
@@ -38,8 +41,8 @@ class ShopAPITestCase(APITestCase):
                 'name': product.name,
                 'date_created': self.format_datetime(product.date_created),
                 'date_updated': self.format_datetime(product.date_updated),
-                'category': product.category_id, 
-                'articles': self.get_article_list_data(product.articles.filter(active=True))
+                'category': product.category_id,
+                'ecoscore': ECOSCORE_GRADE
             } for product in products
         ]
 
@@ -48,22 +51,10 @@ class ShopAPITestCase(APITestCase):
             {
                 'id': category.id,
                 'name': category.name,
+                'description': category.description,
                 'date_created': self.format_datetime(category.date_created),
                 'date_updated': self.format_datetime(category.date_updated),
             } for category in categories
-        ]
-    
-    def get_product_detail_data(self, products):
-        return [
-            {
-                'id': product.pk,
-                'name': product.name,
-                'date_created': self.format_datetime(product.date_created),
-                'date_updated': self.format_datetime(product.date_updated),
-                'category': product.category_id, 
-                'articles': self.get_article_list_data(product.articles.filter(active=True)),
-                'ecoscore': ECOSCORE_GRADE
-            }  for product in products
         ]
 
 
