@@ -1,59 +1,59 @@
-from rest_framework.views import APIView
+from rest_framework.viewsets import ReadOnlyModelViewSet, ModelViewSet
 from rest_framework.response import Response
-from rest_framework.serializers import ModelSerializer
-from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.decorators import action
+
+from shop.models import Category, Product, Article
+from shop.serializers import CategoryDetailSerializer, CategoryListSerializer,\
+    ProductDetailSerializer, ProductListSerializer, ArticleSerializer
 
 
-from shop.models import Category
-from shop.serializers import CategorySerializer
-from shop.models import Product
-from shop.serializers import ProductSerializer
-from shop.models import Article
-from shop.serializers import ArticleSerializer
+class MultipleSerializerMixin:
 
-class CategoryViewset(ReadOnlyModelViewSet):
- 
-    serializer_class = CategorySerializer
- 
+    detail_serializer_class = None
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve' and self.detail_serializer_class is not None:
+            return self.detail_serializer_class
+        return super().get_serializer_class()
+
+
+class AdminCategoryViewset(MultipleSerializerMixin, ModelViewSet):
+
+    serializer_class = CategoryListSerializer
+    detail_serializer_class = CategoryDetailSerializer
+    queryset = Category.objects.all()
+
+
+class CategoryViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
+
+    serializer_class = CategoryListSerializer
+    detail_serializer_class = CategoryDetailSerializer
+
     def get_queryset(self):
         return Category.objects.filter(active=True)
 
-# class CategoryAPIView(APIView):
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk):
+        self.get_object().disable()
+        return Response()
 
-#     def get(self, *args, **kwargs):
-#         categories = Category.objects.all()
-#         serializer = CategorySerializer(categories, many=True)
-#         return Response(serializer.data)
-    
-class CategorySerializer(ModelSerializer):
- 
-    class Meta:
-        model = Category
-        fields = ['id', 'name']
 
-# class ProductAPIView(APIView):
+class ProductViewset(MultipleSerializerMixin, ReadOnlyModelViewSet):
 
-#     def get(self, *args, **kwargs):
-#         products = Product.objects.all()
-#         serializer = ProductSerializer(products, many=True)
-#         return Response(serializer.data)
+    serializer_class = ProductListSerializer
+    detail_serializer_class = ProductDetailSerializer
 
-class ProductViewset(ReadOnlyModelViewSet):
- 
-    serializer_class = ProductSerializer
- 
     def get_queryset(self):
-        return Product.objects.filter(active=True)
+        queryset = Product.objects.filter(active=True)
         category_id = self.request.GET.get('category_id')
-        if category_id is not None:
+        if category_id:
             queryset = queryset.filter(category_id=category_id)
         return queryset
-    
-class ProductSerializer(ModelSerializer):
- 
-    class Meta:
-        model = Product
-        fields = ['id', 'name', 'description', 'active']
+
+    @action(detail=True, methods=['post'])
+    def disable(self, request, pk):
+        self.get_object().disable()
+        return Response()
 
 
 class ArticleViewset(ReadOnlyModelViewSet):
@@ -66,3 +66,9 @@ class ArticleViewset(ReadOnlyModelViewSet):
         if product_id is not None:
             queryset = queryset.filter(product_id=product_id)
         return queryset
+
+
+class AdminArticleViewset(ModelViewSet):
+
+    serializer_class = ArticleSerializer
+    queryset = Article.objects.all()
